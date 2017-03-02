@@ -9,24 +9,30 @@ import (
 type sample struct{}
 
 //TODO: add description
-type samples struct {
-	store []sample
+type Samples struct {
+	wasCalculated bool
+	store         []sample
+	Total         int
 }
 
 //TODO: add description
-type Printer interface {
-	Print(io.Writer) error
-}
-
-//TODO: add description
-func (ss samples) add(s sample) {
+func (ss *Samples) add(s sample) {
 	ss.store = append(ss.store, s)
 }
 
 //TODO: add description
-func (ss samples) Print(w io.Writer) error {
-	_, err := fmt.Fprint(w, "Printing collected samples")
+func (ss *Samples) Print(w io.Writer) error {
+	if !ss.wasCalculated {
+		ss.calculate()
+	}
+	_, err := fmt.Fprintf(w, fmt.Sprintf("\tTotal = %d\n", ss.Total))
 	return err
 }
 
-var _ Printer = samples{nil}
+func (ss *Samples) calculate() {
+	if ss.wasCalculated {
+		return
+	}
+	ss.Total = len(ss.store)
+	ss.wasCalculated = true
+}

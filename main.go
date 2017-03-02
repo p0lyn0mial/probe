@@ -10,19 +10,22 @@ import (
 )
 
 func main() {
-	fmt.Println("Hello my name is probe. I was designed to measure your server response times")
-
 	//TODO: read duration, rate, target from command line args
-	duration := time.Duration(30) * time.Second
-	rate := 2
+	duration := time.Duration(10) * time.Second
+	rate := 10
 	target := ""
 	ctx := context.TODO()
 
-	//TODO: make sure that duration, rate, target are reasonable.
-	p := probe.New()
+	p, err := probe.New(ctx, duration, rate, target)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 
-	res := p.Start(ctx, duration, rate, target)
-	err := res.Print(os.Stdout)
+	fmt.Println(fmt.Sprintf("Measuring response times for = %s, execution time = %v ...", target, duration))
+	res := p.Start()
+	fmt.Println(fmt.Sprintf("Statistics for = %s:", target))
+	err = res.Print(os.Stdout)
 	if err != nil {
 		fmt.Printf("sorry something went wrong while printing the results, details = %s\n", err.Error())
 		os.Exit(1)

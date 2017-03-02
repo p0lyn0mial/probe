@@ -20,7 +20,7 @@ build: clean fmt vet
 	go build -o ./$(BUILD_DIR)/$(OUTPUT) 
 
 test:
-	go test ./...
+	go test ./... -race $(T_FLAGS)
 
 run:
 	./$(BUILD_DIR)/$(OUTPUT)
