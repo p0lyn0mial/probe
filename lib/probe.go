@@ -22,15 +22,19 @@ type voyager struct {
 
 // New creates a brand new probe.
 // The method will sanitize the input and if incorrect will return an error.
+//
+// Arguments:
+//  d - duration, the period of time over which response times are gathered
+//  r - rate, roughly the number of request per second.
+//  t - target, a URL address of an endpoint
+//
 // Default values are provided for the following parameters if not set:
 //   duration = 5 min
-//   rate = 2
-//
-// TODO: duration, rate, target
+//   rate = 10
 func New(d time.Duration, r int, t string) (voyager, error) {
 	if r == 0 {
-		fmt.Println("Rate not set, default value will be used 2")
-		r = 2
+		r = 10
+		fmt.Printf("Rate not set, default value will be used %d\n", r)
 	}
 	if r < 1 {
 		return voyager{}, errors.New("incorrect value of rate param, min >= 1")
@@ -40,8 +44,8 @@ func New(d time.Duration, r int, t string) (voyager, error) {
 	}
 
 	if d.Seconds() == 0 {
-		fmt.Println("Duration not set, default value will be used 5 min")
 		d = time.Duration(5) * time.Minute
+		fmt.Printf("Duration not set, default value will be used %v", d)
 	}
 
 	client := &http.Client{
@@ -55,13 +59,14 @@ func New(d time.Duration, r int, t string) (voyager, error) {
 		},
 		Timeout: 60 * time.Second,
 	}
+	//TODO: validate target
 	return voyager{duration: d, rate: r, target: t, hClient: client}, nil
 }
 
 //TODO: add description
 func (v voyager) Start(ctx context.Context) *Samples {
 	var wg sync.WaitGroup
-	results := &Samples{store: []sample{}}
+	results := &Samples{rspTimes: []float64{}}
 	resultsCh := make(chan sample)
 	// synchronization primitive between consumer and main loop
 	consumerDoneCh := make(chan bool)
@@ -118,37 +123,39 @@ func (v voyager) Start(ctx context.Context) *Samples {
 func (v voyager) workerWrapper(ctx context.Context, resCh chan<- sample, changeName *sync.WaitGroup) {
 	defer changeName.Done()
 	defer handleCrash("TODO: give me a message")
-	s, err := v.worker(ctx)
+	rspTime, statusCode, err := v.worker(ctx)
 	if err == nil {
+		s := sample{
+			rspTime:    rspTime,
+			statusCode: statusCode,
+		}
 		resCh <- s
 	}
 }
 
 // worker makes actual HTTP GET request to target
-// HTTP 200 and 204 are considered success
-func (v voyager) worker(ctx context.Context) (sample, error) {
+func (v voyager) worker(ctx context.Context) (time.Duration, int, error) {
 	req, err := http.NewRequest("GET", v.target, nil)
 	if err != nil {
-		return sample{}, err
+		return 0, 0, err
 	}
 	req = req.WithContext(ctx)
 
 	start := time.Now()
 	res, err := v.hClient.Do(req)
+	//TODO: is this the best place to calculate elapsed time ??!!
+	//maybe after reading the body ?
 	elapsed := time.Since(start)
 	if err != nil {
-		return sample{}, err
+		return 0, 0, err
 	}
 
 	defer res.Body.Close()
 	_, err = io.Copy(ioutil.Discard, res.Body)
 	if err != nil {
-		return sample{}, err
+		return 0, 0, err
 	}
-	return sample{
-		rspTime: elapsed,
-		succeed: res.StatusCode == http.StatusOK || res.StatusCode == http.StatusNoContent,
-	}, nil
+	return elapsed, res.StatusCode, nil
 }
 
 // handleCrash simply catches a crash and prints an error. Meant to be called via defer

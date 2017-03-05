@@ -30,14 +30,14 @@ func TestStart(t *testing.T) {
 			duration: time.Duration(5) * time.Second,
 			rate:     10,
 			ctxFunc:  context.TODO,
-			output:   "Total = %s",
+			output:   "\tTotal = %d\n\tSucceeded = %d\n\tFailed = %d\n\t50th percentile = %v\n\t95th percentile = %v\n\t99th percentile = %v\n\t99,9th percentile = %v\n",
 		},
 		// scenario 1: set context to timeout before duration
 		//             clean shutdown is expected.
 		{
 			duration:    time.Duration(15) * time.Second,
 			rate:        7,
-			output:      "Total = %s",
+			output:      "\tTotal = %d\n\tSucceeded = %d\n\tFailed = %d\n\t50th percentile = %v\n\t95th percentile = %v\n\t99th percentile = %v\n\t99,9th percentile = %v\n",
 			ctxDuration: time.Duration(8) * time.Second,
 			ctxFunc: func() context.Context {
 				c, _ := context.WithTimeout(context.TODO(), time.Duration(8)*time.Second)
@@ -48,10 +48,10 @@ func TestStart(t *testing.T) {
 		{
 			duration: time.Duration(15) * time.Second,
 			rate:     10,
-			output:   "Total = %s",
+			output:   "\tTotal = %d\n\tSucceeded = %d\n\tFailed = %d\n\t50th percentile = %v\n\t95th percentile = %v\n\t99th percentile = %v\n\t99,9th percentile = %v\n",
 			ctxFunc:  context.TODO,
 			handler: func() {
-				time.Sleep(20)
+				time.Sleep(5 * time.Second)
 			},
 		},
 	}
@@ -90,11 +90,19 @@ func TestStart(t *testing.T) {
 		}
 
 		err = res.Print(buf)
-		ts.output = fmt.Sprintf(ts.output, res.Total)
+		ts.output = fmt.Sprintf(
+			ts.output,
+			res.Total,
+			res.Succeeded,
+			res.Failed,
+			res.P50,
+			res.P95,
+			res.P99,
+			res.P999)
 		if err != nil {
 			t.Errorf("scenario %d: failed to print results, due to %s", i, err.Error())
 		}
-		if strings.Contains(buf.String(), ts.output) {
+		if !strings.Contains(buf.String(), ts.output) {
 			t.Errorf("scenario %d: incorrect output returned\n Got: %s\n ShouldContain: %s\n", i, buf.String(), ts.output)
 		}
 

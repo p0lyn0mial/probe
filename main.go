@@ -10,8 +10,8 @@ import (
 )
 
 func main() {
-	//TODO: read duration, rate, target from command line args
-	duration := time.Duration(5) * time.Second
+	//TODO: read duration, target from command line args
+	duration := time.Duration(60) * time.Second * 5
 	rate := 10
 	target := "https://gitlab.com"
 
@@ -30,4 +30,6 @@ func main() {
 		fmt.Printf("sorry something went wrong while printing the results, details = %s\n", err.Error())
 		os.Exit(1)
 	}
+	//TODO: Handle Ctrl+C for gracefull shutdown
+	//Use context cancel function to shutdown the probe
 }
