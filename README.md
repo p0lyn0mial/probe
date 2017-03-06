@@ -10,7 +10,11 @@ note:
 the pkg is not vendored at the moment - hopefully the authors of that pkg will not make any changes that could break the API.
 
 # usage
-TODO: add description
+```sh
+make;make run 
+```
+by default the app measures response times of the service at ‘https://gitlab.com' over 5 minutes.
+TODO: [support for cmd args](https://github.com/p0lyn0mial/probe/blob/master/main.go#L13)
 
 # testing
 by default tests are run with --race flag.
