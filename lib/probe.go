@@ -55,6 +55,10 @@ func New(duration time.Duration, rate int, target string) (voyager, error) {
 		fmt.Printf("duration not set, default value will be used %v", duration)
 	}
 
+	if duration.Seconds() > time.Duration(1*time.Hour).Seconds() {
+		return voyager{}, errors.New("easy - I am not a performance tool, max duration is one hour")
+	}
+
 	client := &http.Client{
 		Transport: &http.Transport{
 			Dial: (&net.Dialer{

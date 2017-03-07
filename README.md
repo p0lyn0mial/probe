@@ -9,9 +9,11 @@ go get github.com/montanaflynn/stats
 note:
 the pkg is not vendored at the moment - hopefully the authors of that pkg will not make any changes that could break the API.
 
+at least Go 1.7 is required.
+
 # usage
 ```sh
-make;make run 
+make build;make run 
 ```
 by default the app measures response times of the service at ‘https://gitlab.com' over 5 minutes.
 TODO: [support for cmd args](https://github.com/p0lyn0mial/probe/blob/master/main.go#L13)
